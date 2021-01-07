@@ -21,6 +21,11 @@ class homebrew (
   contain '::homebrew::compiler'
   contain '::homebrew::install'
 
+  #Install second homebrew for arm
+  if $facts['system_profiler']['model_identifier'] == 'Macmini9,1' {
+    class { '::homebrew::installarm': }
+    contain '::homebrew::installarm'
+  }
   if $homebrew::github_token {
     file { '/etc/environment': ensure => present }
     -> file_line { 'homebrew-github-api-token':
