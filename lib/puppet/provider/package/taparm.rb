@@ -34,11 +34,11 @@ Puppet::Type.type(:package).provide(:taparm, :parent => Puppet::Provider::Packag
     if Puppet.features.bundled_environment?
       Bundler.with_clean_env do
         super(cmd, :uid => uid, :gid => gid, :combine => combine,
-              :custom_environment => { 'HOME' => home, 'HOMEBREW_CHANGE_ARCH_TO_ARM' => 1 }, :failonfail => failonfail)
+              :custom_environment => { 'HOME' => home, 'HOMEBREW_CHANGE_ARCH_TO_ARM' => '1' }, :failonfail => failonfail)
       end
     else
       super(cmd, :uid => uid, :gid => gid, :combine => combine,
-            :custom_environment => { 'HOME' => home, 'HOMEBREW_CHANGE_ARCH_TO_ARM' => 1 }, :failonfail => failonfail)
+            :custom_environment => { 'HOME' => home, 'HOMEBREW_CHANGE_ARCH_TO_ARM' => '1' }, :failonfail => failonfail)
     end
   end
 
