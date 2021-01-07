@@ -5,6 +5,7 @@ class homebrew (
   $github_token               = undef,
   $group                      = 'admin',
   $multiuser                  = false,
+  $arm64_install                = false,
 ) {
 
   if $::operatingsystem != 'Darwin' {
@@ -22,7 +23,7 @@ class homebrew (
   contain '::homebrew::install'
 
   #Install second homebrew for arm
-  if $facts['system_profiler']['model_identifier'] == 'Macmini9,1' {
+  if $homebrew::arm64_install {
     class { '::homebrew::installarm': }
     contain '::homebrew::installarm'
   }
