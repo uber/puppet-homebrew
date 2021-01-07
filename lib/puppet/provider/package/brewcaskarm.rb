@@ -1,7 +1,7 @@
 require 'puppet/provider/package'
 
-Puppet::Type.type(:package).provide(:brewarm, :parent => Puppet::Provider::Package) do
-  desc 'Package management using HomeBrew on OSX for arm64'
+Puppet::Type.type(:package).provide(:brewcaskarm, :parent => Puppet::Provider::Package) do
+  desc "Package management using HomeBrew casks on OSX for arm64"
 
   confine :operatingsystem => :darwin
 
@@ -101,14 +101,14 @@ Puppet::Type.type(:package).provide(:brewarm, :parent => Puppet::Provider::Packa
   def install
     begin
       Puppet.debug "Looking for #{install_name} package..."
-      execute([command(:brew), :info, install_name], :failonfail => true)
+      execute([command(:brew), :cask, :info, install_name], :failonfail => true)
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not find package: #{install_name}"
     end
 
     begin
       Puppet.debug "Package found, installing..."
-      output = execute([command(:brew), :install, install_name, *install_options], :failonfail => true)
+      output = execute([command(:brew), :cask, :install, install_name, *install_options], :failonfail => true)
 
       if output =~ /sha256 checksum/
         Puppet.debug "Fixing checksum error..."
@@ -123,58 +123,39 @@ Puppet::Type.type(:package).provide(:brewarm, :parent => Puppet::Provider::Packa
   def uninstall
     begin
       Puppet.debug "Uninstalling #{resource_name}"
-      execute([command(:brew), :uninstall, resource_name], :failonfail => true)
+      execute([command(:brew), :cask, :uninstall, resource_name], :failonfail => true)
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not uninstall package: #{detail}"
     end
   end
 
   def update
-    begin
-      Puppet.debug "Upgrading #{resource_name}"
-      execute([command(:brew), :upgrade, resource_name], :failonfail => true)
-    rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not upgrade package: #{detail}"
-    end
+    Puppet.debug "Updating #{resource_name}"
+    install
   end
 
   def self.package_list(options={})
     Puppet.debug "Listing installed packages"
-
-    cmd_line = [command(:brew), :list, '--versions']
-    if options[:justme]
-      cmd_line += [ options[:justme] ]
-    end
-
     begin
-      cmd_output = execute(cmd_line)
+      if resource_name = options[:justme]
+        result = execute([command(:brew), :cask, :list, '--versions', resource_name])
+        if result.empty?
+          Puppet.debug "Package #{resource_name} not installed"
+        else
+          Puppet.debug "Found package #{result}"
+        end
+      else
+        result = execute([command(:brew), :cask, :list, '--versions'])
+      end
+      list = result.lines.map {|line| name_version_split(line)}
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not list packages: #{detail}"
     end
 
-    # Exclude extraneous lines from stdout that interfere with the parsing
-    # logic below.  These look like they should be on stderr anyway based
-    # on comparison to other output on stderr.  homebrew bug?
-    re_excludes = Regexp.union([
-      /^==>.*/,
-      /^Tapped \d+ formulae.*/,
-      ])
-    lines = cmd_output.lines.delete_if { |line| line.match(re_excludes) }
-
     if options[:justme]
-      if lines.empty?
-        Puppet.debug "Package #{options[:justme]} not installed"
-        return nil
-      else
-        if lines.length > 1
-          Puppet.warning "Multiple matches for package #{options[:justme]} - using first one found"
-        end
-        line = lines.shift
-        Puppet.debug "Found package #{line}"
-        return name_version_split(line)
-      end
+      return list.shift
     else
-      return lines.map{ |line| name_version_split(line) }
+      return list
     end
   end
 
@@ -183,7 +164,7 @@ Puppet::Type.type(:package).provide(:brewarm, :parent => Puppet::Provider::Packa
       {
         :name     => $1,
         :ensure   => $2,
-        :provider => :brew
+        :provider => :brewcask
       }
     else
       Puppet.warning "Could not match #{line}"

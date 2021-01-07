@@ -1,7 +1,7 @@
 require 'puppet/provider/package'
 
-Puppet::Type.type(:package).provide(:brewarm, :parent => Puppet::Provider::Package) do
-  desc 'Package management using HomeBrew on OSX for arm64'
+Puppet::Type.type(:package).provide(:homebrewarm, :parent => Puppet::Provider::Package) do
+  desc 'Package management using HomeBrew (+ casks!) on OSX for arm64'
 
   confine :operatingsystem => :darwin
 
@@ -100,20 +100,30 @@ Puppet::Type.type(:package).provide(:brewarm, :parent => Puppet::Provider::Packa
 
   def install
     begin
-      Puppet.debug "Looking for #{install_name} package..."
-      execute([command(:brew), :info, install_name], :failonfail => true)
-    rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not find package: #{install_name}"
-    end
+      begin
+        Puppet.debug "Looking for #{install_name} package on brew..."
+        output = execute([command(:brew), :info, install_name], :failonfail => true)
 
-    begin
-      Puppet.debug "Package found, installing..."
-      output = execute([command(:brew), :install, install_name, *install_options], :failonfail => true)
+        Puppet.debug "Package found, installing..."
+        output = execute([command(:brew), :install, install_name, *install_options], :failonfail => true)
 
-      if output =~ /sha256 checksum/
-        Puppet.debug "Fixing checksum error..."
-        mismatched = output.match(/Already downloaded: (.*)/).captures
-        fix_checksum(mismatched)
+        if output =~ /sha256 checksum/
+          Puppet.debug "Fixing checksum error..."
+          mismatched = output.match(/Already downloaded: (.*)/).captures
+          fix_checksum(mismatched)
+        end
+      rescue Puppet::ExecutionFailure
+        Puppet.debug "Package #{install_name} not found on Brew. Trying BrewCask..."
+        execute([command(:brew), :cask, :info, install_name], :failonfail => true)
+
+        Puppet.debug "Package found on brewcask, installing..."
+        output = execute([command(:brew), :cask, :install, install_name, *install_options], :failonfail => true)
+
+        if output =~ /sha256 checksum/
+          Puppet.debug "Fixing checksum error..."
+          mismatched = output.match(/Already downloaded: (.*)/).captures
+          fix_checksum(mismatched)
+        end
       end
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not install package: #{detail}"
@@ -124,57 +134,46 @@ Puppet::Type.type(:package).provide(:brewarm, :parent => Puppet::Provider::Packa
     begin
       Puppet.debug "Uninstalling #{resource_name}"
       execute([command(:brew), :uninstall, resource_name], :failonfail => true)
-    rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not uninstall package: #{detail}"
+    rescue Puppet::ExecutionFailure
+      begin
+        execute([command(:brew), :cask, :uninstall, resource_name], :failonfail => true)
+      rescue Puppet::ExecutionFailure => detail
+        raise Puppet::Error, "Could not uninstall package: #{detail}"
+      end
     end
   end
 
   def update
-    begin
-      Puppet.debug "Upgrading #{resource_name}"
-      execute([command(:brew), :upgrade, resource_name], :failonfail => true)
-    rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not upgrade package: #{detail}"
-    end
+    Puppet.debug "Updating #{resource_name}"
+    install
   end
 
   def self.package_list(options={})
     Puppet.debug "Listing installed packages"
-
-    cmd_line = [command(:brew), :list, '--versions']
-    if options[:justme]
-      cmd_line += [ options[:justme] ]
-    end
-
     begin
-      cmd_output = execute(cmd_line)
+      if resource_name = options[:justme]
+        result = execute([command(:brew), :list, '--versions', resource_name])
+        unless result.include? resource_name
+          result += execute([command(:brew), :cask, :list, '--versions', resource_name])
+        end
+        if result.empty?
+          Puppet.debug "Package #{resource_name} not installed"
+        else
+          Puppet.debug "Found package #{result}"
+        end
+      else
+        result = execute([command(:brew), :list, '--versions'])
+        result += execute([command(:brew), :cask, :list, '--versions'])
+      end
+      list = result.lines.map {|line| name_version_split(line)}
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not list packages: #{detail}"
     end
 
-    # Exclude extraneous lines from stdout that interfere with the parsing
-    # logic below.  These look like they should be on stderr anyway based
-    # on comparison to other output on stderr.  homebrew bug?
-    re_excludes = Regexp.union([
-      /^==>.*/,
-      /^Tapped \d+ formulae.*/,
-      ])
-    lines = cmd_output.lines.delete_if { |line| line.match(re_excludes) }
-
     if options[:justme]
-      if lines.empty?
-        Puppet.debug "Package #{options[:justme]} not installed"
-        return nil
-      else
-        if lines.length > 1
-          Puppet.warning "Multiple matches for package #{options[:justme]} - using first one found"
-        end
-        line = lines.shift
-        Puppet.debug "Found package #{line}"
-        return name_version_split(line)
-      end
+      return list.shift
     else
-      return lines.map{ |line| name_version_split(line) }
+      return list
     end
   end
 
@@ -183,7 +182,7 @@ Puppet::Type.type(:package).provide(:brewarm, :parent => Puppet::Provider::Packa
       {
         :name     => $1,
         :ensure   => $2,
-        :provider => :brew
+        :provider => :homebrew
       }
     else
       Puppet.warning "Could not match #{line}"
