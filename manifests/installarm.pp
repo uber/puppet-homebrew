@@ -95,7 +95,7 @@ class homebrew::installarm {
     }
   }
 
-  exec { 'install-homebrew':
+  exec { 'install-homebrew-arm':
     cwd       => $homebrew_repository,
     command   => "/usr/bin/su ${homebrew::user} -c '/bin/bash -o pipefail -c \"/usr/bin/curl -skSfL https://github.com/homebrew/brew/tarball/master | /usr/bin/tar xz -m --strip 1\"'",
     creates   => "${homebrew_repository}/bin/brew",

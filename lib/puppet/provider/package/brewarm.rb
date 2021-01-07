@@ -1,6 +1,6 @@
 require 'puppet/provider/package'
 
-Puppet::Type.type(:package).provide(:brew, :parent => Puppet::Provider::Package) do
+Puppet::Type.type(:package).provide(:brewarm, :parent => Puppet::Provider::Package) do
   desc 'Package management using HomeBrew on OSX'
 
   confine :operatingsystem => :darwin
