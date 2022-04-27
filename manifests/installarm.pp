@@ -3,7 +3,7 @@ class homebrew::installarm {
   $homebrew_prefix = '/opt/homebrew'
   $homebrew_repository = "${homebrew_prefix}"
 
-  $homebrew_missing_folders = [$homebrew_prefix, "${homebrew_prefix}/usr", "${homebrew_prefix}/usr/local", "${homebrew_prefix}/bin"]
+  $homebrew_missing_folders = [$homebrew_prefix, "${homebrew_prefix}/bin"]
 
   file { $homebrew_missing_folders:
     ensure => directory,
@@ -12,9 +12,7 @@ class homebrew::installarm {
   }
 
   $brew_sys_folders = [
-    "${homebrew_prefix}/usr/local/bin",
     "${homebrew_prefix}/etc",
-    "${homebrew_prefix}/Frameworks",
     "${homebrew_prefix}/include",
     "${homebrew_prefix}/lib",
     "${homebrew_prefix}/lib/pkgconfig",
@@ -24,7 +22,7 @@ class homebrew::installarm {
     if !defined(File[$brew_sys_folder]) {
       file { $brew_sys_folder:
         ensure => directory,
-        owner  => $homebrew::owner,
+        owner  => $homebrew::user,
         group  => $homebrew::group,
       }
     }
@@ -35,7 +33,6 @@ class homebrew::installarm {
     "${homebrew_prefix}/include",
     "${homebrew_prefix}/lib",
     "${homebrew_prefix}/etc",
-    "${homebrew_prefix}/Frameworks",
     "${homebrew_prefix}/var",
 
   ]
@@ -53,7 +50,6 @@ class homebrew::installarm {
 
   $brew_folders = [
     "${homebrew_prefix}/opt",
-    "${homebrew_prefix}/Homebrew",
     "${homebrew_prefix}/Caskroom",
     "${homebrew_prefix}/Cellar",
     "${homebrew_prefix}/var/homebrew",
@@ -107,7 +103,7 @@ class homebrew::installarm {
     group   => 'wheel',
     mode    => '0644',
     content => '/opt/homebrew/bin:/opt/homebrew/sbin',
-    require => Exec['install-homebrew']
+    require => Exec['install-homebrew-arm']
   }
 
 }

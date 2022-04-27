@@ -5,7 +5,6 @@ class homebrew (
   $github_token               = undef,
   $group                      = 'admin',
   $multiuser                  = false,
-  $arm64_install                = false,
 ) {
 
   if $::operatingsystem != 'Darwin' {
@@ -17,14 +16,15 @@ class homebrew (
   }
 
   class { '::homebrew::compiler': }
-  -> class { '::homebrew::install': }
-
   contain '::homebrew::compiler'
-  contain '::homebrew::install'
 
-  #Install second homebrew for arm
-  if $homebrew::arm64_install {
-    class { '::homebrew::installarm': }
+  if !$::has_arm64 {
+    Class['::homebrew::compiler']
+    -> class { '::homebrew::install': }
+    contain '::homebrew::install'
+  } else {
+    Class['::homebrew::compiler']
+    -> class { '::homebrew::installarm': }
     contain '::homebrew::installarm'
   }
   if $homebrew::github_token {
