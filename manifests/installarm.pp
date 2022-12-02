@@ -1,9 +1,10 @@
+# @class homebrew::installarm
 class homebrew::installarm {
 
   $homebrew_prefix = '/opt/homebrew'
-  $homebrew_repository = "${homebrew_prefix}"
+  $homebrew_repository = $homebrew_prefix
 
-  $homebrew_missing_folders = [$homebrew_prefix, "${homebrew_prefix}/bin"]
+  $homebrew_missing_folders = [$homebrew_prefix]
 
   file { $homebrew_missing_folders:
     ensure => directory,
@@ -12,6 +13,7 @@ class homebrew::installarm {
   }
 
   $brew_sys_folders = [
+    "${homebrew_prefix}/bin",
     "${homebrew_prefix}/etc",
     "${homebrew_prefix}/include",
     "${homebrew_prefix}/lib",
@@ -24,6 +26,7 @@ class homebrew::installarm {
         ensure => directory,
         owner  => $homebrew::user,
         group  => $homebrew::group,
+        mode   => '0775',
       }
     }
   }
