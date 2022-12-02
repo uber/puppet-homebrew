@@ -34,6 +34,7 @@ Puppet::Type.type(:package).provide(:tap, :parent => Puppet::Provider::Package) 
 
     custom_env = {'HOME' => home}
     custom_env['HOMEBREW_CHANGE_ARCH_TO_ARM'] = '1' if Facter.value(:has_arm64)
+    cmd = ["arch", "-arm64"].append(cmd) if Facter.value(:has_arm64)
 
     if Puppet.features.bundled_environment?
       Bundler.with_clean_env do
