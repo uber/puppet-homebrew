@@ -4,6 +4,7 @@
 .git/
 .metadata
 .pre-commit-config.yaml
+.rubocop.yml
 .yardoc
 .yardwarns
 /.bundle/

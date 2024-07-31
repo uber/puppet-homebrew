@@ -1,0 +1,17 @@
+Style:
+  Enabled: false
+
+Layout:
+  Enabled: false
+
+Naming/RescuedExceptionsVariableName:
+  Enabled: false
+
+Lint/DeprecatedClassMethods:
+  Enabled: false
+
+Metrics:
+  Enabled: false
+
+AllCops:
+  NewCops: disable
