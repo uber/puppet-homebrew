@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.10.0 (2024-07-31)
+- fix: "ensure" => "latest" now works properly with Homebrew 4
+- fix: add ability to install Homebrew on arm64
+- compatibility: support Rosetta 2
+- compatibility: mark only compatiable with Puppet 7
+- meta: add direnv setup
+- meta: clean up rubocop and puppet-lint issues
+
 ## 1.9.1 (2021-09-23)
 - internal: fixup overly-narrow stdlib version pin
 
