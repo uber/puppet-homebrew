@@ -7,7 +7,7 @@ class homebrew (
   $multiuser                  = false,
 ) {
 
-  if $::operatingsystem != 'Darwin' {
+  if $facts['os']['name'] != 'Darwin' {
     fail('This Module works on Mac OSX only!')
   }
 
@@ -18,7 +18,7 @@ class homebrew (
   class { '::homebrew::compiler': }
   contain '::homebrew::compiler'
 
-  if !$::has_arm64 {
+  if !$facts['has_arm64'] {
     Class['::homebrew::compiler']
     -> class { '::homebrew::install': }
     contain '::homebrew::install'
