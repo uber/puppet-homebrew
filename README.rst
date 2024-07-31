@@ -163,6 +163,24 @@ forked to provide brewcask integration.
 
 Credit for logic involved in tapping repositories goes to `gildas`_.
 
+License
+-------
+
+Copyright 2012 Kelsey Hightower, 2012 Björn Albers, 2015 Kevin James,
+2022 Michael Weber, 2024 Uber Technologies, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 .. _create a personal access token: https://github.com/settings/tokens/new?scopes=&description=Homebrew
 .. _gildas: https://github.com/gildas/puppet-homebrew
 .. _kelseyhightower: https://github.com/kelseyhightower
