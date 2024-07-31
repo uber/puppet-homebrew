@@ -95,12 +95,45 @@ Puppet::Type.type(:package).provide(:brew, :parent => Puppet::Provider::Package)
   end
 
   def latest
-    package = self.class.package_list(:justme => resource_name)
-    package[:ensure]
+    cmd_line = [command(:brew), :info, '--json', resource_name]
+    cmd_output = execute(cmd_line)
+    data = JSON.parse(cmd_output, symbolize_names: true)
+    if data.count < 1
+      uppet.debug "Package #{options[:justme]} not found"
+    end
+    if data.count > 1
+      Puppet.warning "Multiple matches for package #{options[:justme]} - using first one found"
+    end
+    pkg_data = data[0]
+    Puppet.debug "Found package #{pkg_data[:name]}"
+    return pkg_data[:versions][:stable]
   end
 
   def query
     self.class.package_list(:justme => resource_name)
+  end
+
+  def do_install
+    begin
+      output = execute([command(:brew), :install, install_name, *install_options], :failonfail => true)
+
+      if output =~ /sha256 checksum/
+        Puppet.debug "Fixing checksum error..."
+        mismatched = output.match(/Already downloaded: (.*)/).captures
+        fix_checksum(mismatched)
+      end
+
+    rescue Puppet::ExecutionFailure => detail
+      raise Puppet::Error, "Could not install package: #{detail}"
+    end
+  end
+
+  def do_upgrade
+    begin
+      execute([command(:brew), :upgrade, resource_name], :failonfail => true)
+    rescue Puppet::ExecutionFailure => detail
+      raise Puppet::Error, "Could not upgrade package: #{detail}"
+    end
   end
 
   def install
@@ -111,18 +144,8 @@ Puppet::Type.type(:package).provide(:brew, :parent => Puppet::Provider::Package)
       raise Puppet::Error, "Could not find package: #{install_name}"
     end
 
-    begin
-      Puppet.debug "Package found, installing..."
-      output = execute([command(:brew), :install, install_name, *install_options], :failonfail => true)
-
-      if output =~ /sha256 checksum/
-        Puppet.debug "Fixing checksum error..."
-        mismatched = output.match(/Already downloaded: (.*)/).captures
-        fix_checksum(mismatched)
-      end
-    rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not install package: #{detail}"
-    end
+    Puppet.debug "Package found, installing..."
+    do_install
   end
 
   def uninstall
@@ -135,11 +158,12 @@ Puppet::Type.type(:package).provide(:brew, :parent => Puppet::Provider::Package)
   end
 
   def update
-    begin
+    if query
       Puppet.debug "Upgrading #{resource_name}"
-      execute([command(:brew), :upgrade, resource_name], :failonfail => true)
-    rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not upgrade package: #{detail}"
+      do_upgrade
+    else
+      Puppet.debug "Installing #{resource_name}"
+      do_install
     end
   end
 
