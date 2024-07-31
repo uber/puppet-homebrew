@@ -155,6 +155,23 @@ To enable this feature, you can include:
 
 Here's a link to `create a personal access token`_ for Github.
 
+Development
+-----------
+
+Install `direnv`_ to get an automatic Ruby environment. Then execute:
+
+.. code-block:: bash
+    
+    bundle install
+
+To run linting, execute:
+
+.. code-block:: bash
+    
+    puppet-lint manifests/
+    puppet parser validate --noop manifests/
+    rubocop lib/
+
 Original Author
 ---------------
 
@@ -181,6 +198,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+.. _direnv: https://direnv.net/
 .. _create a personal access token: https://github.com/settings/tokens/new?scopes=&description=Homebrew
 .. _gildas: https://github.com/gildas/puppet-homebrew
 .. _kelseyhightower: https://github.com/kelseyhightower

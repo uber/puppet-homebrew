@@ -1,8 +1,8 @@
 package { 'meanbee/tap':
   ensure   => present,
   provider => tap,
-} ->
-package { 'gc2qif':
+}
+-> package { 'gc2qif':
   ensure   => present,
   provider => homebrew,
 }

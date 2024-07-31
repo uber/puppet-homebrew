@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide(:homebrew, :parent => Puppet::Provider::Pack
     end
   end
 
-  def self.instances(justme = false)
+  def self.instances
     package_list.collect { |hash| new(hash) }
   end
 
@@ -156,7 +156,7 @@ Puppet::Type.type(:package).provide(:homebrew, :parent => Puppet::Provider::Pack
   def self.package_list(options={})
     Puppet.debug "Listing installed packages"
     begin
-      if resource_name = options[:justme]
+      if (resource_name = options[:justme])
         result = execute([command(:brew), :list, '--versions', resource_name])
         unless result.include? resource_name
           result += execute([command(:brew), :list, '--cask', '--versions', resource_name])

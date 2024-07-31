@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide(:brewcask, :parent => Puppet::Provider::Pack
     end
   end
 
-  def self.instances(justme = false)
+  def self.instances
     package_list.collect { |hash| new(hash) }
   end
 
@@ -107,7 +107,7 @@ Puppet::Type.type(:package).provide(:brewcask, :parent => Puppet::Provider::Pack
     begin
       Puppet.debug "Looking for #{install_name} package..."
       execute([command(:brew), :info, '--cask', install_name], :failonfail => true)
-    rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure
       raise Puppet::Error, "Could not find package: #{install_name}"
     end
 
@@ -142,7 +142,7 @@ Puppet::Type.type(:package).provide(:brewcask, :parent => Puppet::Provider::Pack
   def self.package_list(options={})
     Puppet.debug "Listing installed packages"
     begin
-      if resource_name = options[:justme]
+      if (resource_name = options[:justme])
         result = execute([command(:brew), :list, '--cask', '--versions', resource_name])
         if result.empty?
           Puppet.debug "Package #{resource_name} not installed"

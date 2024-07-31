@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide(:brew, :parent => Puppet::Provider::Package)
     end
   end
 
-  def self.instances(justme = false)
+  def self.instances
     package_list.collect { |hash| new(hash) }
   end
 
@@ -107,7 +107,7 @@ Puppet::Type.type(:package).provide(:brew, :parent => Puppet::Provider::Package)
     begin
       Puppet.debug "Looking for #{install_name} package..."
       execute([command(:brew), :info, install_name], :failonfail => true)
-    rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure
       raise Puppet::Error, "Could not find package: #{install_name}"
     end
 
@@ -179,7 +179,7 @@ Puppet::Type.type(:package).provide(:brew, :parent => Puppet::Provider::Package)
         return name_version_split(line)
       end
     else
-      return lines.map{ |line| name_version_split(line) }
+      return lines.map{ |l| name_version_split(l) }
     end
   end
 
